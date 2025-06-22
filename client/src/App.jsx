@@ -1,72 +1,42 @@
-import DashboardContainer from './components/DashboardContainer';
-import SideBar from './components/SideBar';
-import { useAuth0 } from '@auth0/auth0-react';
-import TopNavigation from './components/TopNavigation'
-import React, { useEffect, useState } from 'react';
-import Loading from './components/Loading';
-import BugTable from './components/BugContainer/BugTable';
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import MyBugs from './components/BugContainer/MyBugs'
-import ReportBugContainer from './components/ReportBugContainer';
+import { Routes, Route, Navigate } from "react-router-dom";
+import Bugs from "./pages/Bugs";
+import CreateBug from "./pages/CreateBug";
+import Dashboard from "./pages/Dashboard";
+import Users from "./pages/Users";
+import Login from "./pages/Login";
+import Unauthorized from "./pages/Unauthorized";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import Layout from "./components/Layout";
+import { useUser } from "./context/UserContext";
 
 function App() {
-
-  const { isLoading, loginWithRedirect, isAuthenticated, user } = useAuth0();
-  const [foundUser, setFoundUser] = useState(null);
-
-  const baseURL = 'http://localhost:9090/users/';
-
-
-
-  const postUser = (payload) => {
-    return fetch(baseURL, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'application/json'}
-    })
-    .then(res => res.json())
-    .then(data => setFoundUser(data));
-  }
-  
-  const checkUserInDB = () => {
-
-    const userData = {
-      "auth0Sub": user.sub,
-      "name": user.name,
-      "nickname": user.nickname,
-      "email": user.email,
-      "role": user["http://demozero.net/roles"][0]
-    };
-
-    postUser(userData);
-  }
-
-  useEffect(() => {
-    if(isAuthenticated){
-      checkUserInDB();
-    }
-  }, [user])
-  
-
-
-  if (isLoading) return <Loading />
+  const { user } = useUser();
 
   return (
-    !isAuthenticated &&(loginWithRedirect()),
-    <>
-      <Router>
-        <TopNavigation />
-        <SideBar />
-        <Routes>
-          <Route exact path='/' element={<DashboardContainer foundUserSub={user.sub}/>} />
-          <Route exact path='bugs' element={<BugTable />} />
-          <Route exact path='mybugs' element={<MyBugs foundUserSub={user.sub} />} />
-          <Route exact path='report' element={<ReportBugContainer />}/>
-        </Routes>
-    </Router>
-  </>
-  
+    <Routes>
+      {/* Smart redirect for / */}
+      <Route
+        path="/"
+        element={
+          user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+        }
+      />
 
+      {/* Public */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
+
+      {/* Protected Pages */}
+      <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/bugs" element={<Bugs />} />
+        <Route path="/users" element={<ProtectedRoute role="admin"><Users /></ProtectedRoute>} />
+        <Route path="/create" element={<ProtectedRoute role="admin"><CreateBug /></ProtectedRoute>} />
+      </Route>
+
+      {/* Fallback */}
+      <Route path="*" element={<div className="text-red-500 text-xl font-bold">404 - Page Not Found</div>} />
+    </Routes>
   );
 }
 
