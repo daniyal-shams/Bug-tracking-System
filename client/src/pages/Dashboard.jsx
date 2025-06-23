@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
-import { PieChart, Pie, Cell, Tooltip, Legend, BarChart, XAxis, YAxis, Bar, ResponsiveContainer } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  BarChart,
+  XAxis,
+  YAxis,
+  Bar,
+  ResponsiveContainer
+} from "recharts";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 
@@ -9,40 +20,57 @@ const USERS_API = "https://bug-tracking-system-2.onrender.com/users";
 function Dashboard() {
   const [bugs, setBugs] = useState([]);
   const [users, setUsers] = useState([]);
+  const [dateRange, setDateRange] = useState("7");
+  const [selectedUser, setSelectedUser] = useState("all");
   const { user } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(BUGS_API).then(res => res.json()).then(setBugs);
-    fetch(USERS_API).then(res => res.json()).then(setUsers);
+    fetch(BUGS_API).then((res) => res.json()).then(setBugs);
+    fetch(USERS_API).then((res) => res.json()).then(setUsers);
   }, []);
 
   const bugCounts = {
     total: bugs.length,
-    high: bugs.filter(b => b.priority === "high").length,
-    open: bugs.filter(b => b.active).length,
+    high: bugs.filter((b) => b.priority === "high").length,
+    open: bugs.filter((b) => b.active).length,
   };
 
-  const bugsPerUser = users.map(u => ({
+  const bugsPerUser = users.map((u) => ({
     name: u.name,
     value: u.bugs?.length || 0,
-  })).filter(u => u.value > 0);
+  })).filter((u) => u.value > 0);
 
-  const priorityData = ["high", "medium", "low"].map(priority => ({
+  const priorityData = ["high", "medium", "low"].map((priority) => ({
     priority,
-    count: bugs.filter(b => b.priority === priority).length,
+    count: bugs.filter((b) => b.priority === priority).length,
   }));
 
-  const recentActivity = bugs.slice(-5).reverse().map(bug => {
-    const reporter = bug.reporter?.name || "Unknown";
-    return `${reporter} reported "${bug.description}" (${bug.priority})`;
+  // Filtered activity logic
+  const now = new Date();
+  const maxDays = parseInt(dateRange);
+  const filteredBugs = bugs.filter((bug) => {
+    const reportedDate = new Date(bug.dateReported);
+    const daysOld = (now - reportedDate) / (1000 * 60 * 60 * 24);
+    const inRange = daysOld <= maxDays;
+    const byUser = selectedUser === "all" || bug.reporter?.name === selectedUser;
+    return inRange && byUser;
   });
 
+  const recentActivity = filteredBugs
+    .slice(-5)
+    .reverse()
+    .map((bug) => {
+      const reporter = bug.reporter?.name || "Unknown";
+      return `${reporter} reported "${bug.description}" (${bug.priority})`;
+    });
+
   const contributorMap = {};
-  bugs.forEach(b => {
+  bugs.forEach((b) => {
     const name = b.reporter?.name;
     if (name) contributorMap[name] = (contributorMap[name] || 0) + 1;
   });
+
   const topContributors = Object.entries(contributorMap)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
@@ -97,22 +125,40 @@ function Dashboard() {
 
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4">
-        <select className="px-4 py-2 border rounded-md dark:bg-gray-700">
-          <option>Last 30 Days</option>
+        <select
+          className="px-4 py-2 border rounded-md dark:bg-gray-700"
+          value={dateRange}
+          onChange={(e) => setDateRange(e.target.value)}
+        >
+          <option value="7">Last 7 Days</option>
+          <option value="15">Last 15 Days</option>
+          <option value="30">Last 30 Days</option>
         </select>
-        <select className="px-4 py-2 border rounded-md dark:bg-gray-700">
-          <option>All Users</option>
+
+        <select
+          className="px-4 py-2 border rounded-md dark:bg-gray-700"
+          value={selectedUser}
+          onChange={(e) => setSelectedUser(e.target.value)}
+        >
+          <option value="all">All Users</option>
+          {users.map((u) => (
+            <option key={u.id} value={u.name}>{u.name}</option>
+          ))}
         </select>
       </div>
 
       {/* Recent Activity */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md">
         <h3 className="text-lg font-semibold mb-2">🔄 Recent Activity</h3>
-        <ul className="list-disc ml-6 text-sm">
-          {recentActivity.map((log, idx) => (
-            <li key={idx}>{log}</li>
-          ))}
-        </ul>
+        {recentActivity.length === 0 ? (
+          <p className="text-sm text-gray-500">No activity found for this filter.</p>
+        ) : (
+          <ul className="list-disc ml-6 text-sm">
+            {recentActivity.map((log, idx) => (
+              <li key={idx}>{log}</li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Top Contributors */}
