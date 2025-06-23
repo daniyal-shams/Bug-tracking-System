@@ -23,7 +23,7 @@ function Bugs() {
     <div>
       <h2 className="text-2xl font-bold mb-4">All Bugs</h2>
 
-      {/* ✅ Filter Controls */}
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <input
           type="text"
@@ -45,7 +45,7 @@ function Bugs() {
         </select>
       </div>
 
-      {/* ✅ Bug List */}
+      {/* Bug List */}
       {filteredBugs.length === 0 ? (
         <p className="text-gray-500 text-sm">No bugs match your filter.</p>
       ) : (
@@ -60,7 +60,7 @@ function Bugs() {
 }
 
 function BugCard({ bug }) {
-  const { description, priority, dateReported, reporter, assignees } = bug;
+  const { description, priority, dateReported, reporter, assignees, active } = bug;
 
   const priorityColor = {
     high: "bg-red-500",
@@ -68,14 +68,17 @@ function BugCard({ bug }) {
     low: "bg-green-500",
   }[priority];
 
+  const statusLabel = active ? "Open" : "Closed";
+  const statusColor = active ? "bg-green-600" : "bg-gray-500";
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 border border-gray-300 dark:border-gray-700">
-      <div className="flex justify-between items-center mb-2">
+      <div className="flex justify-between items-center mb-2 gap-2 flex-wrap">
         <span className={`text-white px-3 py-1 rounded-full text-sm ${priorityColor}`}>
           {priority.toUpperCase()}
         </span>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          Reported: {new Date(dateReported).toLocaleDateString()}
+        <span className={`text-white px-3 py-1 rounded-full text-sm ${statusColor}`}>
+          {statusLabel}
         </span>
       </div>
 
@@ -83,9 +86,9 @@ function BugCard({ bug }) {
 
       <div className="mt-2 text-sm text-gray-700 dark:text-gray-300">
         <p><strong>Reporter:</strong> {reporter.name} ({reporter.role})</p>
-        <p>
-          <strong>Assignees:</strong>{" "}
-          {assignees.map((a) => a.name).join(", ")}
+        <p><strong>Assignees:</strong> {assignees.map((a) => a.name).join(", ")}</p>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Reported: {new Date(dateReported).toLocaleDateString()}
         </p>
       </div>
     </div>

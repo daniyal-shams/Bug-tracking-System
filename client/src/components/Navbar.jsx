@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 function Navbar() {
   const [darkMode, setDarkMode] = useState(
@@ -16,21 +16,43 @@ function Navbar() {
     }
   }, [darkMode]);
 
+  const links = [
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/bugs", label: "Bugs" },
+    { to: "/users", label: "Users" },
+    { to: "/create", label: "Create Bug" },
+    { to: "/manage-bugs", label: "Manage Bugs" },
+    { to: "/manage-users", label: "Manage Users" },
+  ];
+
   return (
-    <nav className="bg-gray-100 dark:bg-gray-800 p-4 shadow flex items-center justify-between">
-      <div className="flex gap-4">
-        <Link to="/dashboard" className="hover:underline text-sm font-medium dark:text-white">Dashboard</Link>
-        <Link to="/bugs" className="hover:underline text-sm font-medium dark:text-white">Bugs</Link>
-        <Link to="/users" className="hover:underline text-sm font-medium dark:text-white">Users</Link>
-        <Link to="/create" className="hover:underline text-sm font-medium dark:text-white">Create Bug</Link>
+    <nav className="bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 shadow-sm px-6 py-3 flex items-center justify-between">
+      
+      {/* Logo / Title */}
+      <div className="text-xl font-bold text-gray-900 dark:text-white">
+        🐞 BugTracker
       </div>
 
-      <button
-        onClick={() => setDarkMode(!darkMode)}
-        className="ml-auto bg-gray-300 dark:bg-gray-700 text-sm font-medium text-gray-900 dark:text-white px-3 py-1 rounded transition-colors"
-      >
-        {darkMode ? "☀ Light Mode" : "🌙 Dark Mode"}
-      </button>
+      {/* Nav Links */}
+      <div className="flex items-center space-x-6">
+        {links.map((link) => (
+          <Link
+            key={link.to}
+            to={link.to}
+            className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition"
+          >
+            {link.label}
+          </Link>
+        ))}
+
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className="ml-4 px-3 py-1 text-sm rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+        >
+          {darkMode ? "☀ Light Mode" : "🌙 Dark Mode"}
+        </button>
+      </div>
     </nav>
   );
 }

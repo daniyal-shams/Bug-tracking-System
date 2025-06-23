@@ -20,3 +20,5 @@ function BugCard({ bug, onDelete, onUpdate }) {
     </div>
   );
 }
+
+export default BugCard;
